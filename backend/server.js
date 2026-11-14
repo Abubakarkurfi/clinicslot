@@ -25,11 +25,13 @@ const allowedOrigins = (process.env.CORS_ORIGINS || '').split(',').map((o) => o.
 app.use(cors({ origin: allowedOrigins }));
 
 // 3. JSON bodies, max 10 kB
-app.use(express.json({ limit: '10kb' }));
-
-// 4. Health check (no database, no login)
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'ok', environment: process.env.NODE_ENV || 'development' });
+app.use((req, res, next) => {
+  const started = Date.now();
+  const path = req.originalUrl.split('?')[0];   // full path, read now, without the query string
+  res.on('finish', () => {
+    console.log(`${new Date().toISOString()} ${req.method} ${path} ${res.statusCode} ${Date.now() - started}ms`);
+  });
+  next();
 });
 
 // 5. Service routes
