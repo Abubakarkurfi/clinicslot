@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Appointment - ClinicSlot</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <a href="index.html" class="brand">
+        <span class="brand-icon">🏥</span> ClinicSlot
+      </a>
+      <ul class="nav-links" id="main-nav"></ul>
+    </div>
+  </header>
+
+  <main class="container" style="max-width: 800px;">
+    <div class="card">
+      <div class="card-header">
+        <h1 class="card-title">Schedule a Doctor Consultation</h1>
+      </div>
+
+      <div id="booking-alert"></div>
+
+      <form id="booking-form">
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="book-specialty">1. Choose Medical Specialty</label>
+            <select id="book-specialty" class="form-control" required>
+              <option value="">Select a Specialty</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="book-doctor">2. Choose Doctor</label>
+            <select id="book-doctor" class="form-control" required disabled>
+              <option value="">Select a Doctor</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="doctor-info-banner" style="display: none; margin-bottom: 1.25rem;" class="alert alert-info"></div>
+
+        <div class="form-group">
+          <label for="book-date">3. Select Appointment Date</label>
+          <input type="date" id="book-date" class="form-control" required disabled>
+        </div>
+
+        <div class="form-group">
+          <label>4. Available Consultation Slots</label>
+          <div id="slots-loading" style="display: none; color: var(--text-muted); font-size: 0.9rem;">Checking live schedule and doctor availability...</div>
+          <div id="slots-container" class="slots-container">
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Please select a doctor and date above to load free slots.</p>
+          </div>
+          <input type="hidden" id="selected-slot-time" required>
+        </div>
+
+        <div class="form-group">
+          <label for="book-reason">5. Reason for Visit (Optional, max 200 characters)</label>
+          <textarea id="book-reason" class="form-control" maxlength="200" placeholder="e.g. Follow-up consultation, recurring headache, routine check-up"></textarea>
+        </div>
+
+        <!-- Bot Prevention Turnstile -->
+        <div class="form-group" style="display: flex; justify-content: center; margin: 1rem 0;">
+          <div class="cf-turnstile" data-sitekey="1x00000000000000000000AA" data-callback="onBookingTurnstileSuccess"></div>
+        </div>
+        <input type="hidden" id="booking-turnstile-token" value="1x00000000000000000000AA">
+
+        <button type="submit" id="btn-confirm-booking" class="btn btn-primary btn-block" disabled>Confirm & Book Appointment</button>
+      </form>
+    </div>
+  </main>
+
+  <footer>
+    <p>ClinicSlot &copy; 2026. Concurrency Protected & Anti-Double Booking Cloud Architecture.</p>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/booking.js"></script>
+</body>
+</html>
