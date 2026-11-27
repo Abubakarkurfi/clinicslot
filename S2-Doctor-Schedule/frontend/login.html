@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login & Registration - ClinicSlot</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Cloudflare Turnstile script -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <a href="index.html" class="brand">
+        <span class="brand-icon">🏥</span> ClinicSlot
+      </a>
+      <ul class="nav-links" id="main-nav"></ul>
+    </div>
+  </header>
+
+  <main class="container" style="max-width: 520px;">
+    <div class="card">
+      <div style="display: flex; border-bottom: 2px solid var(--border); margin-bottom: 1.5rem;">
+        <button id="tab-login" class="btn" style="flex: 1; border-radius: 0; border-bottom: 2px solid var(--primary); font-weight: 700; color: var(--primary);">Sign In</button>
+        <button id="tab-register" class="btn btn-outline" style="flex: 1; border: none; border-radius: 0; color: var(--text-muted);">Register Patient</button>
+      </div>
+
+      <div id="auth-alert"></div>
+
+      <!-- Sign In Form -->
+      <form id="login-form">
+        <div class="form-group">
+          <label for="login-email">Email Address</label>
+          <input type="email" id="login-email" class="form-control" required placeholder="e.g. patient@clinicslot.com">
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" class="form-control" required placeholder="••••••••••">
+        </div>
+        <button type="submit" id="btn-login-submit" class="btn btn-primary btn-block">Sign In</button>
+
+        <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted); background: #f8fafc; padding: 0.75rem; border-radius: var(--radius);">
+          <strong>Demo Credentials:</strong><br>
+          • <strong>Patient:</strong> patient@clinicslot.com / Password123!<br>
+          • <strong>Receptionist:</strong> reception@clinicslot.com / Password123!<br>
+          • <strong>Admin:</strong> admin@clinicslot.com / Password123!
+        </div>
+      </form>
+
+      <!-- Register Patient Form -->
+      <form id="register-form" style="display: none;">
+        <div class="form-group">
+          <label for="reg-name">Full Name</label>
+          <input type="text" id="reg-name" class="form-control" required placeholder="e.g. Mariam Soliman">
+        </div>
+        <div class="form-group">
+          <label for="reg-email">Email Address</label>
+          <input type="email" id="reg-email" class="form-control" required placeholder="mariam@example.com">
+        </div>
+        <div class="form-group">
+          <label for="reg-phone">Phone Number</label>
+          <input type="tel" id="reg-phone" class="form-control" required placeholder="+20 10 1234 5678">
+        </div>
+        <div class="form-group">
+          <label for="reg-password">Password (Minimum 10 characters)</label>
+          <input type="password" id="reg-password" class="form-control" minlength="10" required placeholder="••••••••••">
+        </div>
+
+        <!-- Cloudflare Turnstile Widget (Bot Prevention) -->
+        <div class="form-group" style="display: flex; justify-content: center; margin: 1rem 0;">
+          <div class="cf-turnstile" data-sitekey="1x00000000000000000000AA" data-callback="onTurnstileSuccess"></div>
+        </div>
+        <input type="hidden" id="reg-turnstile-token" value="1x00000000000000000000AA">
+
+        <button type="submit" id="btn-reg-submit" class="btn btn-primary btn-block">Create Patient Account</button>
+      </form>
+    </div>
+  </main>
+
+  <footer>
+    <p>ClinicSlot &copy; 2026. Secure Cloud Authentication with JWT & Turnstile.</p>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    function onTurnstileSuccess(token) {
+      document.getElementById('reg-turnstile-token').value = token;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const tabLogin = document.getElementById('tab-login');
+      const tabRegister = document.getElementById('tab-register');
+      const loginForm = document.getElementById('login-form');
+      const registerForm = document.getElementById('register-form');
+
+      tabLogin.addEventListener('click', () => {
+        tabLogin.style.borderBottom = '2px solid var(--primary)';
+        tabLogin.style.color = 'var(--primary)';
+        tabLogin.style.fontWeight = '700';
+        tabRegister.style.borderBottom = 'none';
+        tabRegister.style.color = 'var(--text-muted)';
+        tabRegister.style.fontWeight = '500';
+        loginForm.style.display = 'block';
+        registerForm.style.display = 'none';
+        clearAlert('auth-alert');
+      });
+
+      tabRegister.addEventListener('click', () => {
+        tabRegister.style.borderBottom = '2px solid var(--primary)';
+        tabRegister.style.color = 'var(--primary)';
+        tabRegister.style.fontWeight = '700';
+        tabLogin.style.borderBottom = 'none';
+        tabLogin.style.color = 'var(--text-muted)';
+        tabLogin.style.fontWeight = '500';
+        loginForm.style.display = 'none';
+        registerForm.style.display = 'block';
+        clearAlert('auth-alert');
+      });
+
+      // Handle Login
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearAlert('auth-alert');
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+
+        try {
+          const res = await apiRequest('/sessions', {
+            method: 'POST',
+            body: { email, password }
+          });
+
+          localStorage.setItem('token', res.token);
+          localStorage.setItem('user', JSON.stringify(res.user));
+
+          showAlert('auth-alert', 'Signed in successfully! Redirecting...', 'success');
+          setTimeout(() => {
+            if (res.user.role === 'Admin') window.location.href = 'admin.html';
+            else if (res.user.role === 'Receptionist') window.location.href = 'reception.html';
+            else window.location.href = 'book.html';
+          }, 800);
+        } catch (err) {
+          showAlert('auth-alert', err.message, 'error');
+        }
+      });
+
+      // Handle Registration
+      registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearAlert('auth-alert');
+
+        const fullName = document.getElementById('reg-name').value;
+        const email = document.getElementById('reg-email').value;
+        const phone = document.getElementById('reg-phone').value;
+        const password = document.getElementById('reg-password').value;
+        const turnstileToken = document.getElementById('reg-turnstile-token').value || '1x00000000000000000000AA';
+
+        try {
+          const res = await apiRequest('/users', {
+            method: 'POST',
+            headers: {
+              'X-Turnstile-Token': turnstileToken
+            },
+            body: {
+              fullName,
+              email,
+              phone,
+              password
+            }
+          });
+
+          localStorage.setItem('token', res.token);
+          localStorage.setItem('user', JSON.stringify(res.user));
+
+          showAlert('auth-alert', 'Account created! Redirecting to booking...', 'success');
+          setTimeout(() => {
+            window.location.href = 'book.html';
+          }, 800);
+        } catch (err) {
+          showAlert('auth-alert', err.message, 'error');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

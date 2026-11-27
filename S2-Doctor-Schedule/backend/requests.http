@@ -1,0 +1,132 @@
+### =============================================================================
+### ClinicSlot REST Client Testing Script (VS Code REST Client)
+### =============================================================================
+
+@baseUrl = http://localhost:3000/api
+# @baseUrl = https://clinicslot-api.vercel.app/api
+
+### 1. Health Check (T-H01)
+GET {{baseUrl}}/health
+
+### 2. Search Doctors by Specialty (T-B01)
+GET {{baseUrl}}/doctors?specialty=Cardiology
+
+### 3. List Specialties
+GET {{baseUrl}}/specialties
+
+### 4. Patient Registration (T-X04: role tampering test)
+POST {{baseUrl}}/users
+Content-Type: application/json
+X-Turnstile-Token: 1x00000000000000000000AA
+
+{
+  "fullName": "Test Patient",
+  "email": "testpatient@example.com",
+  "phone": "+201099887766",
+  "password": "Password123!",
+  "role": "Admin"
+}
+
+### 5. Patient Login
+# @name loginPatient
+POST {{baseUrl}}/sessions
+Content-Type: application/json
+
+{
+  "email": "patient@clinicslot.com",
+  "password": "Password123!"
+}
+
+### 6. Save Patient Token
+@patientToken = {{loginPatient.response.body.token}}
+
+### 7. Receptionist Login
+# @name loginReception
+POST {{baseUrl}}/sessions
+Content-Type: application/json
+
+{
+  "email": "reception@clinicslot.com",
+  "password": "Password123!"
+}
+
+### 8. Save Receptionist Token
+@receptionToken = {{loginReception.response.body.token}}
+
+### 9. Admin Login
+# @name loginAdmin
+POST {{baseUrl}}/sessions
+Content-Type: application/json
+
+{
+  "email": "admin@clinicslot.com",
+  "password": "Password123!"
+}
+
+### 10. Save Admin Token
+@adminToken = {{loginAdmin.response.body.token}}
+
+### 11. View Doctor Free Slots (S2 slotService test)
+GET {{baseUrl}}/doctors/d0000000-0000-0000-0000-000000000001/slots?date=2026-11-25
+
+### 12. Book Appointment (T-B02)
+# @name bookAppointment
+POST {{baseUrl}}/appointments
+Content-Type: application/json
+Authorization: Bearer {{patientToken}}
+X-Turnstile-Token: 1x00000000000000000000AA
+
+{
+  "doctorId": "d0000000-0000-0000-0000-000000000001",
+  "startTime": "2026-11-25T09:00:00.000Z",
+  "reason": "Chest tightness and annual consultation"
+}
+
+### 13. Save Appointment ID
+@appointmentId = {{bookAppointment.response.body.id}}
+
+### 14. Double Booking Attempt (T-B04: Expected 409 SLOT_TAKEN)
+POST {{baseUrl}}/appointments
+Content-Type: application/json
+Authorization: Bearer {{patientToken}}
+X-Turnstile-Token: 1x00000000000000000000AA
+
+{
+  "doctorId": "d0000000-0000-0000-0000-000000000001",
+  "startTime": "2026-11-25T09:00:00.000Z",
+  "reason": "Trying to book same slot"
+}
+
+### 15. View My Appointments (Patient only sees own bookings)
+GET {{baseUrl}}/appointments
+Authorization: Bearer {{patientToken}}
+
+### 16. Receptionist Daily Schedule Overview (T-R01)
+GET {{baseUrl}}/schedules?date=2026-11-25
+Authorization: Bearer {{receptionToken}}
+
+### 17. Receptionist Check-in Patient (T-R01)
+PATCH {{baseUrl}}/appointments/{{appointmentId}}/status
+Content-Type: application/json
+Authorization: Bearer {{receptionToken}}
+
+{
+  "status": "CheckedIn"
+}
+
+### 18. Invalid Status Transition: Cancelled -> CheckedIn (Expected 409 INVALID_STATUS_CHANGE)
+PATCH {{baseUrl}}/appointments/{{appointmentId}}/status
+Content-Type: application/json
+Authorization: Bearer {{receptionToken}}
+
+{
+  "status": "Booked"
+}
+
+### 19. Admin Import Egyptian Public Holidays (Nager.Date External API Integration)
+POST {{baseUrl}}/holidays?year=2026
+Authorization: Bearer {{adminToken}}
+
+### 20. View Audit Trail (Admin only - T-X02: Patient gets 403)
+GET {{baseUrl}}/audit-logs
+Authorization: Bearer {{adminToken}}
