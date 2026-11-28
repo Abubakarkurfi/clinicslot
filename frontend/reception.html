@@ -1,0 +1,89 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reception Desk - ClinicSlot</title>
+  <link rel="stylesheet" href="css/reception.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>ClinicSlot - Reception Desk</h1>
+    <span id="role-badge" class="badge"></span>
+  </header>
+
+  <main>
+    <p id="message" class="message" role="status" hidden></p>
+
+    <!-- 1. Day overview -->
+    <section class="card">
+      <div class="row">
+        <h2>Day overview</h2>
+        <label>Date <input type="date" id="date-input"></label>
+      </div>
+      <div id="totals" class="totals"></div>
+      <table>
+        <thead>
+          <tr><th>Doctor</th><th>Specialty</th><th>Room</th><th>Total</th><th>Booked</th>
+              <th>Checked in</th><th>Completed</th><th>No-show</th><th>Cancelled</th><th></th></tr>
+        </thead>
+        <tbody id="overview-body"></tbody>
+      </table>
+    </section>
+
+    <!-- 2. One doctor's schedule -->
+    <section class="card" id="schedule-section" hidden>
+      <h2 id="schedule-title">Schedule</h2>
+      <table>
+        <thead>
+          <tr><th>Time</th><th>Patient</th><th>Phone</th><th>Reason</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="schedule-body"></tbody>
+      </table>
+    </section>
+
+    <div class="two-columns">
+      <!-- 3. Find a patient -->
+      <section class="card staff-only">
+        <h2>Find a patient</h2>
+        <form id="search-form" class="row">
+          <input type="search" id="search-input" placeholder="Name or phone" minlength="2" maxlength="50" required>
+          <button type="submit">Search</button>
+        </form>
+        <ul id="search-results" class="results"></ul>
+      </section>
+
+      <!-- 4. Register a walk-in -->
+      <section class="card receptionist-only">
+        <h2>Register a walk-in</h2>
+        <form id="walkin-form" class="stack">
+          <label>Full name <input id="walkin-name" maxlength="100" required></label>
+          <label>Phone <input id="walkin-phone" maxlength="20" required></label>
+          <label>Email (optional) <input id="walkin-email" type="email" maxlength="254"></label>
+          <button type="submit">Register</button>
+        </form>
+      </section>
+    </div>
+
+    <!-- 5. Book or rebook (calls Student 1's endpoints) -->
+    <section class="card receptionist-only" id="booking-section">
+      <h2 id="booking-title">Book for a patient</h2>
+      <p>Patient: <strong id="selected-patient">none selected (search or register first)</strong></p>
+      <form id="booking-form" class="row">
+        <select id="booking-doctor" required></select>
+        <input type="date" id="booking-date" required>
+        <button type="button" id="load-slots">Show free slots</button>
+        <select id="booking-slot" required><option value="">Pick a slot</option></select>
+        <button type="submit" id="booking-submit">Book</button>
+        <button type="button" id="cancel-rebook" hidden>Stop rebooking</button>
+      </form>
+      <div id="turnstile-box"></div>
+    </section>
+  </main>
+
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/reception.js"></script>
+</body>
+</html>
