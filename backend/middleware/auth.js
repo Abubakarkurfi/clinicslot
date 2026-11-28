@@ -14,7 +14,7 @@ function authenticate(req, res, next) {
   }
   try {
     const payload = jwt.verify(token, secret, { algorithms: ['HS256'] });
-    req.user = { id: payload.sub, role: payload.role };
+        req.user = { id: payload.sub || payload.id, role: payload.role };   // S1's login uses "id"
     next();
   } catch {
     return sendError(res, 401, 'UNAUTHENTICATED', 'Your session has expired or is invalid. Please log in again.');

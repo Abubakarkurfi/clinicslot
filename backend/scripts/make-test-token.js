@@ -4,12 +4,11 @@ require('dotenv').config();
 const jwt = require('jsonwebtoken');
 
 const USERS = {
-  Admin:        { sub: '00000000-0000-0000-0000-000000000001', role: 'Admin' },
-  Receptionist: { sub: '00000000-0000-0000-0000-000000000002', role: 'Receptionist' },
-  Patient:      { sub: '00000000-0000-0000-0000-000000000003', role: 'Patient' },  // Sara Ali
-  Patient2:     { sub: '00000000-0000-0000-0000-000000000004', role: 'Patient' }   // Youssef Hassan
+  Admin:        { sub: '00000000-0000-0000-0000-000000000001', id: '00000000-0000-0000-0000-000000000001', role: 'Admin' },
+  Receptionist: { sub: '00000000-0000-0000-0000-000000000002', id: '00000000-0000-0000-0000-000000000002', role: 'Receptionist' },
+  Patient:      { sub: '00000000-0000-0000-0000-000000000003', id: '00000000-0000-0000-0000-000000000003', role: 'Patient' },  // Sara Ali
+  Patient2:     { sub: '00000000-0000-0000-0000-000000000004', id: '00000000-0000-0000-0000-000000000004', role: 'Patient' }   // Youssef Hassan
 };
-
 const who = process.argv[2] || 'Receptionist';
 if (!USERS[who]) {
   console.error(`Unknown user "${who}". Use one of: ${Object.keys(USERS).join(', ')}`);
