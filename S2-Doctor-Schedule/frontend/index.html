@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClinicSlot - Cloud-Based Clinic Appointment Booking System</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <a href="index.html" class="brand">
+        <span class="brand-icon">🏥</span> ClinicSlot
+      </a>
+      <ul class="nav-links" id="main-nav">
+        <!-- Injected via auth.js -->
+      </ul>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>Healthcare Booking, Simplified</h1>
+      <p>Instant online doctor appointments across top specialties. Real-time availability, zero waiting queues, and guaranteed double-booking protection.</p>
+      <div style="display: flex; justify-content: center; gap: 1rem;">
+        <a href="book.html" class="btn btn-primary" style="background: white; color: #0284c7;">Book an Appointment</a>
+        <a href="#search-section" class="btn btn-outline" style="border-color: rgba(255,255,255,0.6); color: white;">Browse Specialists</a>
+      </div>
+    </section>
+
+    <section id="search-section" class="card">
+      <div class="card-header">
+        <h2 class="card-title">Search Specialists & Doctors</h2>
+      </div>
+
+      <div class="grid-2" style="margin-bottom: 1.5rem;">
+        <div class="form-group">
+          <label for="filter-specialty">Specialty</label>
+          <select id="filter-specialty" class="form-control">
+            <option value="">All Specialties</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="filter-name">Doctor Name</label>
+          <input type="text" id="filter-name" class="form-control" placeholder="Search by name (e.g. Mahmoud, Dina)">
+        </div>
+      </div>
+
+      <div id="doctors-container" class="grid-3">
+        <p style="color: var(--text-muted);">Loading doctors...</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>ClinicSlot &copy; 2026. Module 26CSCN29H Cloud Computing & Cloud Security Group 2 Project.</p>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const specialtySelect = document.getElementById('filter-specialty');
+      const nameInput = document.getElementById('filter-name');
+      const doctorsContainer = document.getElementById('doctors-container');
+
+      // 1. Load specialties
+      try {
+        const specialties = await apiRequest('/specialties');
+        specialties.forEach(spec => {
+          const opt = document.createElement('option');
+          opt.value = spec.name;
+          opt.textContent = spec.name;
+          specialtySelect.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('Failed to load specialties:', err);
+      }
+
+      // 2. Fetch doctors
+      async function loadDoctors() {
+        doctorsContainer.innerHTML = '';
+        const specialty = specialtySelect.value;
+        const name = nameInput.value;
+
+        const query = new URLSearchParams();
+        if (specialty) query.append('specialty', specialty);
+        if (name) query.append('name', name);
+
+        try {
+          const doctors = await apiRequest(`/doctors?${query.toString()}`);
+          if (doctors.length === 0) {
+            const empty = document.createElement('p');
+            empty.textContent = 'No matching active doctors found.';
+            empty.style.color = 'var(--text-muted)';
+            doctorsContainer.appendChild(empty);
+            return;
+          }
+
+          doctors.forEach(doc => {
+            const card = document.createElement('div');
+            card.className = 'doctor-card';
+
+            const topDiv = document.createElement('div');
+            const nameEl = document.createElement('h3');
+            nameEl.className = 'doc-name';
+            nameEl.textContent = doc.fullName;
+
+            const specEl = document.createElement('div');
+            specEl.className = 'doc-spec';
+            specEl.textContent = doc.specialtyName;
+
+            const infoEl = document.createElement('div');
+            infoEl.className = 'doc-info';
+            infoEl.textContent = `📍 ${doc.room} • ⏱️ ${doc.slotMinutes} min consultations`;
+
+            topDiv.appendChild(nameEl);
+            topDiv.appendChild(specEl);
+            topDiv.appendChild(infoEl);
+
+            const bookBtn = document.createElement('a');
+            bookBtn.href = `book.html?doctorId=${doc.id}`;
+            bookBtn.className = 'btn btn-primary btn-sm';
+            bookBtn.textContent = 'View Free Slots & Book';
+
+            card.appendChild(topDiv);
+            card.appendChild(bookBtn);
+            doctorsContainer.appendChild(card);
+          });
+        } catch (err) {
+          doctorsContainer.innerHTML = '';
+          showAlert('doctors-container', `Error loading doctors: ${err.message}`, 'error');
+        }
+      }
+
+      specialtySelect.addEventListener('change', loadDoctors);
+      nameInput.addEventListener('input', loadDoctors);
+      loadDoctors();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "clinicslot-web",
+  "version": "1.0.0",
+  "description": "ClinicSlot Frontend Static Web Client",
+  "scripts": {
+    "start": "http-server . -p 8080 -c-1",
+    "dev": "http-server . -p 8080 -c-1"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

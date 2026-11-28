@@ -1,0 +1,27 @@
+{
+  "name": "clinicslot-api",
+  "version": "1.0.0",
+  "description": "ClinicSlot REST API Backend - Express 5 on Vercel Functions with Neon PostgreSQL",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cloudwatch-logs": "^3.1175.0",
+    "@aws-sdk/client-dynamodb": "^3.1175.0",
+    "@aws-sdk/client-s3": "^3.1175.0",
+    "@aws-sdk/client-secrets-manager": "^3.1175.0",
+    "@aws-sdk/client-sns": "^3.1175.0",
+    "@neondatabase/serverless": "^0.9.5",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^5.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "serverless-http": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
