@@ -1,34 +1,97 @@
-﻿// Shared auth middleware (Student 1 leads; keep theirs if it sets req.user = { id, role }).
+/**
+ * Authentication and Authorization Middleware
+ * Enforces JWT verification, token expiration, and role-based access control (RBAC).
+ */
+
 const jwt = require('jsonwebtoken');
-const { sendError } = require('../utils/validation');
 
-// Reads "Authorization: Bearer <token>", checks signature + expiry, sets req.user
+// Fail closed: no secret = the server refuses to start (no guessable fallback key).
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) throw new Error('JWT_SECRET is not set');
+/**
+ * Enforces authenticated session.
+ * Rejects missing, malformed, or expired tokens with 401 UNAUTHENTICATED.
+ */
 function authenticate(req, res, next) {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) throw new Error('JWT_SECRET is not set'); // fail closed -> 500, nobody gets in
+  const authHeader = req.headers['authorization'];
 
-  const header = req.get('Authorization') || '';
-  const [scheme, token] = header.split(' ');
-  if (scheme !== 'Bearer' || !token) {
-    return sendError(res, 401, 'UNAUTHENTICATED', 'Please log in.');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      error: {
+        code: 'UNAUTHENTICATED',
+        message: 'Authentication required. Missing or malformed Bearer token.'
+      }
+    });
   }
+
+  const token = authHeader.substring(7).trim();
+
   try {
-    const payload = jwt.verify(token, secret, { algorithms: ['HS256'] });
-        req.user = { id: payload.sub || payload.id, role: payload.role };   // S1's login uses "id"
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded; // { id, email, role, fullName, ... }
     next();
-  } catch {
-    return sendError(res, 401, 'UNAUTHENTICATED', 'Your session has expired or is invalid. Please log in again.');
+  } catch (err) {
+    return res.status(401).json({
+      error: {
+        code: 'UNAUTHENTICATED',
+        message: err.name === 'TokenExpiredError' 
+          ? 'Session expired. Please log in again.' 
+          : 'Invalid or forged authentication token.'
+      }
+    });
   }
 }
 
-// authorize('Receptionist', 'Admin') -> 403 for any other role
-function authorize(...roles) {
-  return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      return sendError(res, 403, 'FORBIDDEN', 'You do not have permission to do this.');
+/**
+ * Optional authentication: attaches user if valid token present, otherwise proceeds as anonymous.
+ */
+function optionalAuth(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7).trim();
+    try {
+      req.user = jwt.verify(token, JWT_SECRET);
+    } catch (e) {
+      req.user = null;
     }
+  } else {
+    req.user = null;
+  }
+  next();
+}
+
+/**
+ * Role-Based Access Control (RBAC)
+ * Allows access ONLY if authenticated user has one of the specified roles.
+ * Deny by default.
+ */
+function authorize(...allowedRoles) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        error: {
+          code: 'UNAUTHENTICATED',
+          message: 'Authentication required before checking permissions.'
+        }
+      });
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({
+        error: {
+          code: 'FORBIDDEN',
+          message: `Forbidden: role '${req.user.role}' lacks permission for this endpoint.`
+        }
+      });
+    }
+
     next();
   };
 }
 
-module.exports = { authenticate, authorize };
+module.exports = {
+  authenticate,
+  optionalAuth,
+  authorize,
+  JWT_SECRET
+};

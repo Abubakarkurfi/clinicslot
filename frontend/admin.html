@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Console - ClinicSlot</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <a href="index.html" class="brand">
+        <span class="brand-icon">🏥</span> ClinicSlot
+      </a>
+      <ul class="nav-links" id="main-nav"></ul>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="card-header" style="border: none; padding-bottom: 0;">
+      <div>
+        <h1 class="card-title" style="font-size: 1.75rem;">Clinic Administration Console</h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Configure specialties, doctors, clinic working hours, public holidays, and inspect security logs.</p>
+      </div>
+    </div>
+
+    <div id="admin-alert"></div>
+
+    <div class="grid-2">
+      <!-- 1. Doctor Management -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Add New Doctor</h2>
+        </div>
+        <form id="add-doctor-form">
+          <div class="form-group">
+            <label for="doc-fullname">Full Name</label>
+            <input type="text" id="doc-fullname" class="form-control" required placeholder="e.g. Dr. Sherif Nabil">
+          </div>
+          <div class="form-group">
+            <label for="doc-specialty">Specialty</label>
+            <select id="doc-specialty" class="form-control" required></select>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="doc-room">Room / Office</label>
+              <input type="text" id="doc-room" class="form-control" required placeholder="Room 205">
+            </div>
+            <div class="form-group">
+              <label for="doc-slotminutes">Slot Length</label>
+              <select id="doc-slotminutes" class="form-control" required>
+                <option value="15">15 minutes</option>
+                <option value="20">20 minutes</option>
+                <option value="30" selected>30 minutes</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Add Doctor</button>
+        </form>
+      </div>
+
+      <!-- 2. Specialty & Time-Off Management -->
+      <div>
+        <!-- Add Specialty -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Add Specialty</h2>
+          </div>
+          <form id="add-specialty-form">
+            <div class="form-group">
+              <label for="spec-name">Specialty Name</label>
+              <input type="text" id="spec-name" class="form-control" required placeholder="e.g. Neurology">
+            </div>
+            <div class="form-group">
+              <label for="spec-desc">Description</label>
+              <input type="text" id="spec-desc" class="form-control" placeholder="Short description">
+            </div>
+            <button type="submit" class="btn btn-secondary btn-block">Create Specialty</button>
+          </form>
+        </div>
+
+        <!-- External Holiday Import (Nager.Date) -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Egyptian Public Holidays Sync</h2>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+            Imports official public holidays for Egypt via external REST API (<strong>Nager.Date</strong>). Automatically blocks clinic appointments on national holidays.
+          </p>
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="number" id="holiday-year" class="form-control" value="2026" min="2024" max="2030" style="max-width: 120px;">
+            <button type="button" id="btn-import-holidays" class="btn btn-primary" style="flex: 1;">Import Egyptian Holidays</button>
+          </div>
+          <div id="holiday-import-status" style="margin-top: 0.75rem; font-size: 0.85rem;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Doctor List & Status -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Active Doctor Registry</h2>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Doctor Name</th>
+              <th>Specialty</th>
+              <th>Room</th>
+              <th>Consultation Duration</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="doctors-admin-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Security Audit Trail -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Security & System Audit Log</h2>
+        <button id="btn-refresh-audit" class="btn btn-outline btn-sm">Refresh Logs</button>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+        Immutable audit trail capturing authentication events, appointment status modifications, and administrative configuration changes.
+      </p>
+      <div class="table-container" style="max-height: 350px; overflow-y: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Actor</th>
+              <th>Role</th>
+              <th>Action</th>
+              <th>Target ID</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody id="audit-log-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>ClinicSlot &copy; 2026. Centralized Administration & Security Governance.</p>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

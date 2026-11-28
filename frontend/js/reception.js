@@ -1,6 +1,12 @@
 ﻿// S3 Reception page logic. All API data is shown with textContent (never innerHTML) -> no XSS.
 
 const $ = (id) => document.getElementById(id);
+// S1's login saves the user (with role) in localStorage. The role only shows/hides buttons;
+// the API checks the real role on every request.
+function getRole() {
+  try { return JSON.parse(localStorage.getItem('user') || 'null')?.role || null; } catch { return null; }
+}
+const TURNSTILE_SITE_KEY = window.CONFIG.TURNSTILE_SITE_KEY;
 const role = getRole();
 let currentDoctor = null;      // { id, name } of the open schedule
 let selectedPatient = null;    // { id, fullName } for booking
@@ -284,7 +290,7 @@ function handleError(err) {
 
 function start() {
   if (!role) {
-    showMessage('Please log in as a receptionist or admin.', true);
+        location.href = 'login.html';   // not logged in -> go to S1's login page
     return;
   }
   $('role-badge').textContent = role;
