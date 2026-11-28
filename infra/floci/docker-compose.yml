@@ -1,0 +1,12 @@
+﻿# Floci: a free local copy of AWS (S3, Lambda, DynamoDB...) on http://localhost:4566
+services:
+  floci:
+    image: floci/floci:latest
+    container_name: floci
+    ports:
+      - "4566:4566"
+    environment:
+      FLOCI_STORAGE_MODE: persistent
+      FLOCI_STORAGE_PERSISTENT_PATH: /app/data
+    volumes:
+      - ./data:/app/data
