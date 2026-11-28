@@ -1,5 +1,5 @@
 ﻿// GET /api/audit-log?limit=50   (Admin only)
-const auditService = require('../services/auditService');
+const auditService = require('../services/auditLogService');
 const { sendError } = require('../utils/validation');
 
 async function getAuditLog(req, res) {
