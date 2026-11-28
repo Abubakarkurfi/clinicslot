@@ -1,48 +1,94 @@
-﻿// Shared (Student 1 leads). One helper for every fetch() to the API.
-const TOKEN_KEY = 'clinicslot_token';
+/**
+ * Central API Client and XSS-Safe DOM Helpers
+ * Enforces textContent rendering to completely neutralize Stored/Reflected XSS attacks.
+ */
 
-function getToken() {
-  return sessionStorage.getItem(TOKEN_KEY);
-}
+async function apiRequest(endpoint, options = {}) {
+  const url = `${window.CONFIG.API_BASE_URL}${endpoint}`;
+  const headers = { ...options.headers };
 
-// The role inside the token, ONLY to show/hide buttons. The API does the real check.
-function getRole() {
-  const token = getToken();
-  if (!token) return null;
-  try {
-    const part = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    return JSON.parse(atob(part)).role || null;
-  } catch {
-    return null;
-  }
-}
-
-// apiRequest('/schedules?date=2026-11-16')  or  apiRequest('/patients', { method: 'POST', body: {...} })
-// Returns the JSON on success; throws an Error with .status and .code on failure.
-async function apiRequest(path, { method = 'GET', body, headers = {} } = {}) {
-  const options = { method, headers: { ...headers } };
-  const token = getToken();
-  if (token) options.headers.Authorization = 'Bearer ' + token;
-  if (body !== undefined) {
-    options.headers['Content-Type'] = 'application/json';
-    options.body = JSON.stringify(body);
+  // Attach session token if logged in
+  const token = localStorage.getItem('token');
+  if (token && !headers['Authorization']) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
 
-  let response;
+  // Attach Content-Type if payload provided
+  if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+    options.body = JSON.stringify(options.body);
+  }
+
+  const fetchOptions = {
+    ...options,
+    headers
+  };
+
   try {
-    response = await fetch(API_BASE_URL + path, options);
-  } catch {
-    const err = new Error('Cannot reach the server. Check your connection and try again.');
-    err.status = 0;
+    const res = await fetch(url, fetchOptions);
+    let data = null;
+    const contentType = res.headers.get('content-type');
+
+    if (contentType && contentType.includes('application/json')) {
+      data = await res.json();
+    } else {
+      const text = await res.text();
+      data = text ? { message: text } : {};
+    }
+
+    if (!res.ok) {
+      const errorObj = new Error(data.error?.message || `HTTP ${res.status}: Request failed`);
+      errorObj.status = res.status;
+      errorObj.code = data.error?.code || 'UNKNOWN_ERROR';
+      errorObj.data = data;
+      throw errorObj;
+    }
+
+    return data;
+  } catch (err) {
+    if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
+      console.error('[API NETWORK ERROR] Could not connect to API server at:', url);
+      const networkError = new Error('Cannot connect to ClinicSlot server. Please check your connection or CORS configuration.');
+      networkError.code = 'NETWORK_ERROR';
+      throw networkError;
+    }
     throw err;
   }
-
-  const data = response.status === 204 ? null : await response.json().catch(() => null);
-  if (!response.ok) {
-    const err = new Error(data?.error?.message || `Request failed (${response.status}).`);
-    err.status = response.status;
-    err.code = data?.error?.code;
-    throw err;
-  }
-  return data;
 }
+
+/**
+ * XSS-Safe Helper: Assign text safely using textContent.
+ * Never sets innerHTML to prevent script execution (Threat 6 mitigation).
+ */
+function safeText(element, text) {
+  if (typeof element === 'string') {
+    element = document.getElementById(element);
+  }
+  if (element) {
+    element.textContent = text !== null && text !== undefined ? String(text) : '';
+  }
+}
+
+/**
+ * Helper to display alerts safely without innerHTML
+ */
+function showAlert(containerId, message, type = 'error') {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  container.innerHTML = ''; // clear previous
+  const alertDiv = document.createElement('div');
+  alertDiv.className = `alert alert-${type}`;
+  alertDiv.textContent = message;
+  container.appendChild(alertDiv);
+}
+
+function clearAlert(containerId) {
+  const container = document.getElementById(containerId);
+  if (container) container.innerHTML = '';
+}
+
+window.apiRequest = apiRequest;
+window.safeText = safeText;
+window.showAlert = showAlert;
+window.clearAlert = clearAlert;
